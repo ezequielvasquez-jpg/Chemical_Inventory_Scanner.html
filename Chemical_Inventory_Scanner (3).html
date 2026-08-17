@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemical Inventory Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f2ed;
+    --surface: #ffffff;
+    --surface2: #f9f8f5;
+    --border: #d8d4c8;
+    --border2: #e8e4dc;
+    --text: #1a1916;
+    --text2: #6b6760;
+    --text3: #9b9890;
+    --accent: #1a3a2a;
+    --accent2: #2d5c42;
+    --accent-light: #e8f0eb;
+    --warn: #7a3e00;
+    --warn-bg: #fef3e2;
+    --danger: #7a1a1a;
+    --danger-bg: #fdeaea;
+    --success: #1a5c2e;
+    --success-bg: #e8f5ed;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --radius: 4px;
+    --radius-lg: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--accent2);
+  }
+  .header-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.95;
+  }
+  .header-sub {
+    font-size: 11px;
+    opacity: 0.55;
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .left-col { display: flex; flex-direction: column; gap: 1rem; }
+  .right-col { display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border2);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-head-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .card-head h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .card-body { padding: 1rem; }
+
+  /* ── Scan input ── */
+  .scan-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .scan-field {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 500;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none;
+    letter-spacing: 0.05em;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .scan-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26,58,42,0.1);
+    background: #fff;
+  }
+  .scan-field::placeholder { color: var(--text3); font-size: 13px; letter-spacing: 0; }
+
+  /* ── Buttons ── */
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-success {
+    background: var(--success);
+    color: #fff;
+    border-color: var(--success);
+  }
+  .btn-success:hover { opacity: 0.88; }
+  .btn-success:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Form fields ── */
+  .form-grid { display: grid; gap: 10px; }
+  .form-row-2 { grid-template-columns: 1fr 1fr; }
+  .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  .form-label.auto-tag::after {
+    content: ' AUTO';
+    color: var(--success);
+    font-size: 9px;
+  }
+  input[type=text], input[type=number], select, textarea {
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.12s, box-shadow 0.12s;
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(26,58,42,0.08);
+  }
+  input.auto-filled {
+    background: var(--success-bg);
+    border-color: #a8d5b5;
+  }
+  textarea { resize: vertical; height: 58px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236b6760' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 28px; }
+
+  /* ── Status messages ── */
+  .status-msg {
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    margin-top: 8px;
+    display: none;
+    font-family: var(--mono);
+    line-height: 1.4;
+  }
+  .status-msg.show { display: block; }
+  .status-info { background: #e8f0fb; color: #1a3a7a; border: 1px solid #b8ccf0; }
+  .status-success { background: var(--success-bg); color: var(--success); border: 1px solid #a8d5b5; }
+  .status-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0b8b8; }
+  .status-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #f0d0a0; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: -2px;
+    margin-right: 4px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Source badge ── */
+  .source-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+  .badge-auto { background: var(--success-bg); color: var(--success); border: 1px solid #a8d5b5; }
+  .badge-manual { background: #f0ede4; color: var(--text2); border: 1px solid var(--border); }
+
+  /* ── Form actions ── */
+  .form-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 8px 10px;
+    text-align: left;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .col-del { width: 32px; }
+  .col-bc { width: 110px; }
+  .col-name { width: 160px; }
+  .col-mfr { width: 110px; }
+  .col-cas { width: 85px; }
+  .col-size { width: 70px; }
+  .col-qty { width: 44px; text-align: center; }
+  .col-loc { width: 90px; }
+  .col-src { width: 60px; }
+  .col-sds { width: 80px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text3);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; opacity: 0.4; }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-size: 14px; padding: 2px 4px;
+    border-radius: var(--radius); line-height: 1;
+    transition: color 0.1s, background 0.1s;
+  }
+  .del-btn:hover { color: var(--danger); background: var(--danger-bg); }
+
+  .sds-link {
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    font-family: var(--mono);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 2px;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .sds-link:hover { background: var(--accent-light); border-color: var(--accent); }
+
+  /* ── Counter ── */
+  .count-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    padding: 1px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+  }
+
+  /* ── Info note ── */
+  .info-note {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  .info-note strong { color: var(--text); }
+
+  /* ── Export bar ── */
+  .export-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border2); margin: 10px 0; }
+
+  @media (max-width: 780px) {
+    .layout { grid-template-columns: 1fr; }
+    .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">&#9632; Chemical Inventory Scanner</div>
+    <div class="header-sub">Scan barcode &rarr; auto-lookup &rarr; export to Excel</div>
+  </div>
+  <div class="header-right">
+    <span id="headerCount" style="font-family:var(--mono);font-size:11px;opacity:0.6;">0 items</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+
+    <!-- Scanner -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">&#9641;</div>
+        <h2>Barcode scanner</h2>
+      </div>
+      <div class="card-body">
+        <div class="scan-wrap">
+          <input class="scan-field" type="text" id="barcodeInput"
+            placeholder="Scan or type UPC/EAN&hellip;"
+            autofocus autocomplete="off" />
+          <button class="btn btn-primary" onclick="doLookup()" id="lookupBtn">Look up</button>
+        </div>
+        <div id="lookupStatus" class="status-msg"></div>
+        <div class="info-note" style="margin-top:10px;">
+          <strong>How to scan:</strong> Click the field above so it has focus, then scan your barcode &mdash; the scanner acts as a keyboard and triggers the lookup automatically.
+        </div>
+      </div>
+    </div>
+
+    <!-- Details form -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">&#9998;</div>
+        <h2>Chemical details &nbsp;<span id="sourceBadge" class="source-badge badge-manual">manual</span></h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-grid form-row-2">
+            <div class="form-group">
+              <label class="form-label" id="lbl_barcode">Barcode / ID</label>
+              <input type="text" id="f_barcode" placeholder="Auto-filled on scan" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="lbl_name">Chemical name *</label>
+              <input type="text" id="f_name" placeholder="e.g. Acetone" oninput="onNameChange()" />
+            </div>
+          </div>
+          <div class="form-grid form-row-2">
+            <div class="form-group">
+              <label class="form-label" id="lbl_mfr">Manufacturer</label>
+              <input type="text" id="f_mfr" placeholder="e.g. Sigma-Aldrich" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="lbl_sku">Product code / SKU</label>
+              <input type="text" id="f_sku" placeholder="e.g. 179124" />
+            </div>
+          </div>
+          <div class="form-grid form-row-3">
+            <div class="form-group">
+              <label class="form-label">CAS number</label>
+              <input type="text" id="f_cas" placeholder="e.g. 67-64-1" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="lbl_size">Container size</label>
+              <input type="text" id="f_size" placeholder="e.g. 1 L" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Qty on hand</label>
+              <input type="number" id="f_qty" placeholder="1" min="0" />
+            </div>
+          </div>
+          <div class="form-grid form-row-2">
+            <div class="form-group">
+              <label class="form-label">Storage location</label>
+              <input type="text" id="f_loc" placeholder="e.g. Lab Room 101" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hazard class</label>
+              <select id="f_hazard">
+                <option value="">&#8212; select &#8212;</option>
+                <option>Flammable</option>
+                <option>Corrosive</option>
+                <option>Toxic</option>
+                <option>Oxidizer</option>
+                <option>Explosive</option>
+                <option>Compressed Gas</option>
+                <option>Environmental Hazard</option>
+                <option>Biohazard</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea id="f_notes" placeholder="Purity, concentration, special handling instructions&hellip;"></textarea>
+          </div>
+        </div>
+        <hr />
+        <div class="form-actions">
+          <button class="btn btn-success" onclick="addToInventory()">&#43; Add to inventory</button>
+          <button class="btn btn-ghost" id="sdsBtn" onclick="searchSDS()" disabled>Find SDS</button>
+          <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+        </div>
+        <div id="addStatus" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- SDS Resources -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">&#128196;</div>
+        <h2>SDS / MSDS resources</h2>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:6px;">
+        <a class="sds-link" style="display:block;padding:6px 10px;" href="https://www.sigmaaldrich.com/US/en/support/sds-search" target="_blank">Sigma-Aldrich SDS Search &rarr;</a>
+        <a class="sds-link" style="display:block;padding:6px 10px;" href="https://www.fishersci.com/us/en/catalog/search/sdshome.html" target="_blank">Fisher Scientific SDS &rarr;</a>
+        <a class="sds-link" style="display:block;padding:6px 10px;" href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank">PubChem (NIH) &rarr;</a>
+        <a class="sds-link" style="display:block;padding:6px 10px;" href="https://cameochemicals.noaa.gov/" target="_blank">CAMEO Chemicals (NOAA) &rarr;</a>
+        <a class="sds-link" style="display:block;padding:6px 10px;" href="https://www.cdc.gov/niosh/npg/" target="_blank">NIOSH Pocket Guide (CDC) &rarr;</a>
+        <a class="sds-link" style="display:block;padding:6px 10px;" href="https://jr.chemwatch.net/chemwatch.web/" target="_blank">ChemWatch &rarr;</a>
+      </div>
+    </div>
+
+  </div><!-- /left-col -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- Inventory table -->
+    <div class="card">
+      <div class="card-head" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="card-head-icon">&#9776;</div>
+          <h2>Inventory <span class="count-pill" id="countPill">0</span></h2>
+        </div>
+        <div class="export-bar">
+          <button class="btn btn-primary" id="exportCsvBtn" onclick="exportCSV()" disabled>&#8595; Export CSV (Excel)</button>
+          <button class="btn btn-ghost" id="clearAllBtn" onclick="clearAll()" disabled title="Clear all items">&#128465;</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-del"></th>
+              <th class="col-bc">Barcode</th>
+              <th class="col-name">Chemical name</th>
+              <th class="col-mfr">Manufacturer</th>
+              <th class="col-cas">CAS no.</th>
+              <th class="col-size">Size</th>
+              <th class="col-qty">Qty</th>
+              <th class="col-loc">Location</th>
+              <th class="col-src">Source</th>
+              <th class="col-sds">SDS</th>
+            </tr>
+          </thead>
+          <tbody id="invBody">
+            <tr>
+              <td colspan="10">
+                <div class="empty-state">
+                  <div class="empty-icon">&#9641;</div>
+                  Scan a barcode to begin building your inventory
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="exportStatus" class="status-msg" style="margin:0 1rem 0.75rem;"></div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">?</div>
+        <h2>Instructions &amp; notes</h2>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="info-note">
+          <strong>Auto-populate coverage:</strong> Lookups use the free UPC Item DB API. Works well for retail/commercial chemical products. Lab-grade chemicals from Sigma-Aldrich, Fisher, or VWR may not be in the public database &mdash; fill those manually and use the SDS links on the left.
+        </div>
+        <div class="info-note">
+          <strong>CAS number &amp; container size</strong> are almost never encoded in standard barcodes. You will need to enter these manually, or find them on the product label or SDS sheet.
+        </div>
+        <div class="info-note">
+          <strong>Exporting:</strong> Click &ldquo;Export CSV (Excel)&rdquo; to download a <code>.csv</code> file. Open it directly in Excel, or copy the rows into your <em>Chemical_Inventory_Tracker.xlsx</em> spreadsheet.
+        </div>
+        <div class="info-note">
+          <strong>OSHA requirement (29 CFR 1910.1200):</strong> SDS sheets must be readily accessible to employees during their shift. Keep printed copies in a binder near chemical storage areas in addition to this digital record.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /right-col -->
+
+</div><!-- /layout -->
+
+<script>
+let inventory = [];
+let currentSource = 'manual';
+
+const autoFields = ['f_name','f_mfr','f_sku','f_size'];
+
+function setStatus(id, type, html) {
+  const el = document.getElementById(id);
+  el.className = 'status-msg show status-' + type;
+  el.innerHTML = html;
+}
+function clearStatus(id) {
+  const el = document.getElementById(id);
+  el.className = 'status-msg';
+  el.innerHTML = '';
+}
+
+async function doLookup() {
+  const barcode = document.getElementById('barcodeInput').value.trim();
+  if (!barcode) return;
+
+  setStatus('lookupStatus', 'info', '<span class="spinner"></span>Looking up <strong>' + barcode + '</strong>&hellip;');
+  document.getElementById('f_barcode').value = barcode;
+  clearAutoHighlights();
+
+  try {
+    const targetUrl = 'https://api.upcitemdb.com/prod/trial/lookup?upc=' + encodeURIComponent(barcode);
+    // Try direct first, then fall back through CORS proxies
+    const proxies = [
+      targetUrl,
+      'https://corsproxy.io/?' + encodeURIComponent(targetUrl),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
+    ];
+    let res, lastErr;
+    for (const url of proxies) {
+      try {
+        res = await fetch(url);
+        if (res.ok) break;
+      } catch(e) { lastErr = e; res = null; }
+    }
+    if (!res || !res.ok) throw lastErr || new Error('All lookup attempts failed');
+    const data = await res.json();
+
+    if (data.code === 'OK' && data.items && data.items.length > 0) {
+      const item = data.items[0];
+      const name = item.title || '';
+      const brand = item.brand || '';
+      const model = item.model || item.asin || '';
+      const fullText = (item.title || '') + ' ' + (item.description || '');
+      const size = extractSize(fullText);
+
+      setField('f_name', name);
+      setField('f_mfr', brand);
+      setField('f_sku', model);
+      setField('f_size', size);
+
+      currentSource = 'auto';
+      setBadge('auto');
+      document.getElementById('sdsBtn').disabled = false;
+      setStatus('lookupStatus', 'success', '&#10003; Found: <strong>' + escHtml(name) + '</strong>. Review below and fill in CAS number, location, and hazard class.');
+    } else {
+      currentSource = 'manual';
+      setBadge('manual');
+      setStatus('lookupStatus', 'warn', 'Barcode not found in public database. Fill in details manually &mdash; then use the SDS links to find the safety data sheet.');
+    }
+  } catch(e) {
+    currentSource = 'manual';
+    setBadge('manual');
+    setStatus('lookupStatus', 'error', '&#9888; Lookup failed: ' + e.message + '. Check your internet connection and try again.');
+  }
+}
+
+function setField(id, val) {
+  const el = document.getElementById(id);
+  el.value = val;
+  if (val) el.classList.add('auto-filled');
+}
+
+function clearAutoHighlights() {
+  autoFields.forEach(id => document.getElementById(id).classList.remove('auto-filled'));
+}
+
+function setBadge(type) {
+  const b = document.getElementById('sourceBadge');
+  b.className = 'source-badge ' + (type === 'auto' ? 'badge-auto' : 'badge-manual');
+  b.textContent = type === 'auto' ? 'auto-populated' : 'manual';
+}
+
+function extractSize(text) {
+  const m = text.match(/(\d+\.?\d*\s*(ml|mL|L|g|kg|oz|lb|lbs|fl\.?\s*oz|gallon|gal|litre|liter))/i);
+  return m ? m[0] : '';
+}
+
+function onNameChange() {
+  document.getElementById('sdsBtn').disabled = !document.getElementById('f_name').value.trim();
+}
+
+function searchSDS() {
+  const name = document.getElementById('f_name').value.trim();
+  const cas = document.getElementById('f_cas').value.trim();
+  const q = encodeURIComponent(cas || name);
+  window.open('https://www.sigmaaldrich.com/US/en/search#q=' + q + '&t=all', '_blank');
+}
+
+document.getElementById('barcodeInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLookup();
+});
+
+function addToInventory() {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) {
+    setStatus('addStatus', 'error', 'Chemical name is required.');
+    document.getElementById('f_name').focus();
+    return;
+  }
+  const entry = {
+    barcode: document.getElementById('f_barcode').value.trim(),
+    name,
+    mfr:    document.getElementById('f_mfr').value.trim(),
+    sku:    document.getElementById('f_sku').value.trim(),
+    cas:    document.getElementById('f_cas').value.trim(),
+    size:   document.getElementById('f_size').value.trim(),
+    qty:    document.getElementById('f_qty').value.trim() || '1',
+    loc:    document.getElementById('f_loc').value.trim(),
+    hazard: document.getElementById('f_hazard').value,
+    notes:  document.getElementById('f_notes').value.trim(),
+    source: currentSource,
+    date:   new Date().toLocaleDateString()
+  };
+  inventory.push(entry);
+  renderTable();
+  clearForm();
+  document.getElementById('barcodeInput').value = '';
+  document.getElementById('barcodeInput').focus();
+  clearStatus('lookupStatus');
+  setStatus('addStatus', 'success', '&#10003; <strong>' + escHtml(name) + '</strong> added to inventory.');
+  setTimeout(() => clearStatus('addStatus'), 3000);
+}
+
+function renderTable() {
+  const n = inventory.length;
+  document.getElementById('countPill').textContent = n;
+  document.getElementById('headerCount').textContent = n + ' item' + (n !== 1 ? 's' : '');
+  document.getElementById('exportCsvBtn').disabled = n === 0;
+  document.getElementById('clearAllBtn').disabled = n === 0;
+
+  const tbody = document.getElementById('invBody');
+  if (n === 0) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">&#9641;</div>Scan a barcode to begin building your inventory</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = inventory.map((r, i) => {
+    const sdsQ = encodeURIComponent(r.cas || r.name);
+    const sdsUrl = 'https://www.sigmaaldrich.com/US/en/search#q=' + sdsQ + '&t=all';
+    return '<tr>' +
+      '<td class="col-del"><button class="del-btn" onclick="removeItem(' + i + ')" title="Remove">&#10005;</button></td>' +
+      '<td class="col-bc" title="' + escHtml(r.barcode) + '" style="font-family:var(--mono);font-size:11px;">' + escHtml(r.barcode || '&#8212;') + '</td>' +
+      '<td class="col-name" title="' + escHtml(r.name) + '"><strong>' + escHtml(r.name) + '</strong></td>' +
+      '<td class="col-mfr" title="' + escHtml(r.mfr) + '">' + escHtml(r.mfr || '&#8212;') + '</td>' +
+      '<td class="col-cas" style="font-family:var(--mono);font-size:11px;">' + escHtml(r.cas || '&#8212;') + '</td>' +
+      '<td class="col-size">' + escHtml(r.size || '&#8212;') + '</td>' +
+      '<td class="col-qty" style="text-align:center;">' + escHtml(r.qty) + '</td>' +
+      '<td class="col-loc" title="' + escHtml(r.loc) + '">' + escHtml(r.loc || '&#8212;') + '</td>' +
+      '<td class="col-src"><span class="source-badge ' + (r.source === 'auto' ? 'badge-auto' : 'badge-manual') + '">' + (r.source === 'auto' ? 'auto' : 'manual') + '</span></td>' +
+      '<td class="col-sds"><a class="sds-link" href="' + sdsUrl + '" target="_blank">SDS &rarr;</a></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function removeItem(i) {
+  const name = inventory[i].name;
+  inventory.splice(i, 1);
+  renderTable();
+}
+
+function clearForm() {
+  ['f_barcode','f_name','f_mfr','f_sku','f_cas','f_size','f_qty','f_loc','f_notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_hazard').value = '';
+  clearAutoHighlights();
+  setBadge('manual');
+  currentSource = 'manual';
+  document.getElementById('sdsBtn').disabled = true;
+  clearStatus('addStatus');
+}
+
+function clearAll() {
+  if (inventory.length && confirm('Remove all ' + inventory.length + ' items from the list?')) {
+    inventory = [];
+    renderTable();
+  }
+}
+
+function exportCSV() {
+  const headers = ['Barcode/ID','Chemical Name','Manufacturer','Product Code','CAS Number','Container Size','Qty on Hand','Storage Location','Hazard Class','Notes','Source','Date Added'];
+  const rows = inventory.map(r =>
+    [r.barcode,r.name,r.mfr,r.sku,r.cas,r.size,r.qty,r.loc,r.hazard,r.notes,r.source,r.date]
+      .map(v => '"' + (v||'').replace(/"/g,'""') + '"').join(',')
+  );
+  const csv = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Chemical_Inventory_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  setStatus('exportStatus', 'success', '&#10003; CSV downloaded. Open in Excel or paste into your Chemical_Inventory_Tracker.xlsx.');
+  setTimeout(() => clearStatus('exportStatus'), 4000);
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
